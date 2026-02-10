@@ -2,10 +2,13 @@ package com.example.rivarly.util;
 
 import com.example.rivarly.entity.Person;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import javax.script.ScriptEngine;
 import java.security.Key;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
  * JWT tokens, extracting claims, and validating tokens. It utilizes a secret key injected from
  * the application's configuration to ensure secure signing and verification of tokens.
  */
+@Component
 public class JwtUtil {
 
     /**
@@ -142,5 +146,33 @@ public class JwtUtil {
      */
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * Extracts the username from a given JWT (JSON Web Token) by retrieving the subject claim.
+     *
+     * @param token the JWT token from which to extract the username
+     * @return the username stored in the token's subject claim as a String
+     */
+    public String extractUsername(String token) {
+        return extractClaim(token, claims -> claims.getSubject());
+    }
+
+    /**
+     * Verifies the validity of a provided JWT (JSON Web Token) by checking its username
+     * and whether it has expired.
+     *
+     * @param token       the JWT token to validate
+     * @param userDetails the user details used to verify the token's username
+     * @return true if the token is valid (username matches and token is not expired), false otherwise
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        try{
+            String username = extractUsername(token);
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        }
+        catch (ExpiredJwtException e){
+            return false;
+        }
     }
 }
