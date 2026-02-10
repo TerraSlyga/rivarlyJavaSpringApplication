@@ -20,13 +20,10 @@ public class Privilege {
     @Column(name = "privilegeId")
     private long privilegeId;
 
-    @Column(name = "privilegeName", length = 50, nullable = false)
+    @Column(name = "privilegeName", length = 50, nullable = false, unique = true)
     private String privilegeName;
 
-    @Column(name = "privilegeDescription", length = 255, columnDefinition = "We were lazy to describe this:)")
+    @Column(name = "privilegeDescription", length = 255)
     private String privilegeDescription;
-
-    @ToString.Exclude
-    @ManyToMany(mappedBy = "privileges")
-    private Set<Person> persons = new HashSet<>();
+    
 }
