@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <module name="TreeWalker">
+
+        <!-- Іменування -->
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="ParameterName"/>
+        <module name="ConstantName"/>
+
+        <!-- Розмір методів -->
+        <module name="MethodLength">
+            <property name="max" value="50"/>
+        </module>
+
+        <!-- Магічні числа -->
+        <module name="MagicNumber"/>
+
+        <!-- Порожні блоки -->
+        <module name="EmptyBlock"/>
+
+        <!-- Невикористані імпорти -->
+        <module name="UnusedImports"/>
+
+    </module>
+</module>
