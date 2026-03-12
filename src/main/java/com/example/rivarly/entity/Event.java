@@ -14,15 +14,17 @@ import java.util.Set;
 @Setter
 public class Event {
 
+    public static final int SHORT_NAME_LENGTH = 50;
+    public static final int MAX_LENGTH = 255;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "eventId")
     private Long eventId;
 
-    @Column(name = "eventName", length = 50, nullable = false)
+    @Column(name = "eventName", length = SHORT_NAME_LENGTH, nullable = false)
     private String eventName;
 
-    @Column(name = "eventDescription", length = 255)
+    @Column(name = "eventDescription", length = MAX_LENGTH)
     private String eventDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,8 +42,8 @@ public class Event {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<EventState> eventStates = new HashSet<>();
 
-    @Column(name = "IconPath")
-    private String IconPath;
+    @Column(name = "iconPath")
+    private String iconPath;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

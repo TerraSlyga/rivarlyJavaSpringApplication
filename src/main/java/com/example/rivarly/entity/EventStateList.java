@@ -1,7 +1,9 @@
 package com.example.rivarly.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +13,8 @@ import lombok.Setter;
 @Setter
 public class EventStateList {
 
+    public static final int MAX_STATE_LENGTH = 15;
     @Id
-    @Column(name = "eventStateName", length = 15, nullable = false)
+    @Column(name = "eventStateName", length = MAX_STATE_LENGTH, nullable = false)
     private String eventStateName;
 }

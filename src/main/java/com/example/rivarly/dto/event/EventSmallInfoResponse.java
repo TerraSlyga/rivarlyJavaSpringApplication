@@ -14,7 +14,7 @@ public class EventSmallInfoResponse {
     private Long eventId;
     private String eventName;
     private String eventDescription;
-    private String IconPath;
+    private String iconPath;
     private Person organizer;
     private Set<EventTags> eventTags;
     private List<EventState> eventStates;
