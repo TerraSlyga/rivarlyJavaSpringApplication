@@ -23,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventService {
 
+    public static final int DEFAULT_PAGE_SIZE = 10;
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
 
@@ -33,7 +34,7 @@ public class EventService {
     private final EventStateListMapper eventStateListMapper;
 
     public Page<EventSmallInfoResponse> getEventsSmallInfo(Integer pageNumber){
-        Pageable paging = PageRequest.of(pageNumber, 10);
+        Pageable paging = PageRequest.of(pageNumber, DEFAULT_PAGE_SIZE);
 
         Page<Event> eventsPage = eventRepository.findAll(paging);
         return eventsPage.map(eventMapper::toDto);

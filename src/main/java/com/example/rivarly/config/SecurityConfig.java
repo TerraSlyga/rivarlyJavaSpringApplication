@@ -1,8 +1,7 @@
 package com.example.rivarly.config;
 
 import com.example.rivarly.util.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletRequest;
-import org.jspecify.annotations.Nullable;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,14 +23,11 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter){
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
-
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -51,7 +47,11 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register",
+                                "/v3/api-docs/**",      // The OpenAPI spec JSON/YAML
+                                "/swagger-ui/**",       // The Swagger UI static assets
+                                "/swagger-dock.html"      // The main UI entry point
+                                ).permitAll()
 
                         // Всі інші запити на /auth/ (включаючи /me) вимагатимуть авторизації
                         // (або можна явно прописати .requestMatchers("/api/auth/me").authenticated())

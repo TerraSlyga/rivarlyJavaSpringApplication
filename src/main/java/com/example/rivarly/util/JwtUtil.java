@@ -7,10 +7,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import javax.script.ScriptEngine;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,15 +34,18 @@ public class JwtUtil {
      * in operations such as token generation and validation.
      */
     @Value("${jwt.secretKey}")
-    private String SECRET_KEY;
+    private String secretKey;
 
     /**
      * Represents the expiration time for JWT tokens, specified in milliseconds.
      * This value is injected from the application configuration property 'jwt.expirationTime'.
      * It defines the duration after which a generated JWT token becomes invalid and can no longer be used.
      */
-    @Value("${jwt.expirationTime}")
-    private long EXPIRATION_TIME;
+    @Value("${jwt.expirationMs}")
+    private long jwtExpirationTime;
+
+    @Value("${jwt.refreshExpirationMs}")
+    private long refreshExpirationTime;
 
     /**
      * Generates a JWT (JSON Web Token) for a given person based on their unique identifier and privileges. 
@@ -76,10 +80,30 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public ResponseCookie generateRefreshJwtCookie(String refreshToken) {
+        return ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth/refreshtoken")
+                .maxAge(refreshExpirationTime)
+                .sameSite("Strict")
+                .build();
+    }
+
+    public ResponseCookie getCleanRefreshJwtCookie() {
+        return ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .path("/api/auth/refreshtoken")
+                .maxAge(0) // Миттєве видалення
+                .build();
+    }
+
+
 
     /**
      * Retrieves the signing key used for generating and verifying JWT tokens.
@@ -88,7 +112,7 @@ public class JwtUtil {
      * @return the secret signing key as a Key object for token operations
      */
     private Key getSigningKey(){
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -169,7 +193,7 @@ public class JwtUtil {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try{
             String username = extractUsername(token);
-            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
         }
         catch (ExpiredJwtException e){
             return false;

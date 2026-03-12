@@ -12,11 +12,12 @@ import java.util.Set;
 @Setter
 public class Team {
 
+    public static final int SHORT_NAME_LENGTH = 50;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long teamId;
 
-    @Column(name = "teamName", length = 50, nullable = false)
+    @Column(name = "teamName", length = SHORT_NAME_LENGTH, nullable = false)
     private String teamName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,6 +31,6 @@ public class Team {
             inverseJoinColumns = @JoinColumn(name = "PersonId"))
     private Set<Person> members;
 
-    @Column(name = "IconPath")
-    private String IconPath;
+    @Column(name = "iconPath")
+    private String iconPath;
 }

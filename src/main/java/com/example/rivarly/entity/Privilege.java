@@ -1,13 +1,8 @@
 package com.example.rivarly.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "privilege")
@@ -15,15 +10,17 @@ import java.util.Set;
 @Setter
 public class Privilege {
 
+    public static final int SHORT_NAME_LENGTH = 50;
+    public static final int MAX_LENGTH = 255;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "privilegeId")
     private long privilegeId;
 
-    @Column(name = "privilegeName", length = 50, nullable = false, unique = true)
+    @Column(name = "privilegeName", length = SHORT_NAME_LENGTH, nullable = false, unique = true)
     private String privilegeName;
 
-    @Column(name = "privilegeDescription", length = 255)
+    @Column(name = "privilegeDescription", length = MAX_LENGTH)
     private String privilegeDescription;
     
 }

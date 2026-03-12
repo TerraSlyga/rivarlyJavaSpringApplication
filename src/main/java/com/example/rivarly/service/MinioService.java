@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class MinioService {
 
 
+    public static final int EXPIRY_DAYS = 7;
     /**
      * The MinioClient instance used for communication with the MinIO server.
      * This client provides methods for file storage, retrieval, and other
@@ -106,7 +107,7 @@ public class MinioService {
                             .method(Method.GET)
                             .bucket(bucketName)
                             .object(fileName)
-                            .expiry(7, TimeUnit.DAYS)
+                            .expiry(EXPIRY_DAYS, TimeUnit.DAYS)
                             .build()
             );
         } catch (Exception e) {
