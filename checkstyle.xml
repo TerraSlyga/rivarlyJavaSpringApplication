@@ -3,29 +3,58 @@
         "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 <module name="Checker">
+    <!-- Specifies the charset to be used for checking source files -->
+    <property name="charset" value="UTF-8"/>
+
     <module name="TreeWalker">
 
-        <!-- Іменування -->
+        <!-- Ensures type names follow naming conventions -->
         <module name="TypeName"/>
+
+        <!-- Ensures method names follow naming conventions -->
         <module name="MethodName"/>
+
+        <!-- Ensures local variable names follow naming conventions -->
         <module name="LocalVariableName"/>
+
+        <!-- Ensures member variable names follow naming conventions -->
         <module name="MemberName"/>
+
+        <!-- Ensures parameter names follow naming conventions -->
         <module name="ParameterName"/>
+
+        <!-- Ensures constant names follow naming conventions -->
         <module name="ConstantName"/>
 
-        <!-- Розмір методів -->
+        <!-- Checks the length of methods to enforce limits -->
         <module name="MethodLength">
             <property name="max" value="50"/>
         </module>
 
-        <!-- Магічні числа -->
+        <!-- Detects usage of magic numbers in the code -->
         <module name="MagicNumber"/>
 
-        <!-- Порожні блоки -->
+        <!-- Identifies empty blocks of code -->
         <module name="EmptyBlock"/>
 
-        <!-- Невикористані імпорти -->
+        <!-- Ensures unused import statements are removed -->
         <module name="UnusedImports"/>
+
+        <!-- Verifies that classes contain Javadoc and its scope -->
+        <module name="JavadocType">
+            <property name="scope" value="public"/>
+        </module>
+
+        <!-- Checks that methods contain proper Javadoc documentation -->
+        <module name="JavadocMethod">
+            <property name="accessModifiers" value="public"/>
+        </module>
+
+        <!-- Checks order of Javadoc at-clauses -->
+        <module name="AtclauseOrder"/>
+
+        <!-- Ensures at-clauses in Javadoc have a non-empty description -->
+        <module name="NonEmptyAtclauseDescription"/>
 
     </module>
 </module>

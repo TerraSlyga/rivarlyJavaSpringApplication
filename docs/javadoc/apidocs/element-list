@@ -1,0 +1,11 @@
+com.example.rivarly
+com.example.rivarly.config
+com.example.rivarly.config.openApi
+com.example.rivarly.controller
+com.example.rivarly.dto.auth
+com.example.rivarly.dto.event
+com.example.rivarly.entity
+com.example.rivarly.mapper
+com.example.rivarly.repository
+com.example.rivarly.service
+com.example.rivarly.util

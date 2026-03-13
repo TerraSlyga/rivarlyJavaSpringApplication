@@ -22,6 +22,10 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Service responsible for handling authentication-related operations.
+ * Includes user registration, login, token management, and fetching user information.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -37,6 +41,13 @@ public class AuthService {
     @Value("${jwt.refreshExpirationMs}")
     private Long refreshTokenDurationMs;
 
+    /**
+     * Registers a new user in the system.
+     * Ensures the nickname is unique, assigns default privileges, and generates tokens.
+     *
+     * @param registerRequest contains registration details like name, email, and password
+     * @return AuthResponse object containing access and refresh tokens along with user details
+     */
     public AuthResponse register(RegisterRequest registerRequest) {
         if (personRepository.existsByNickname(registerRequest.getNickname())) {
             throw new RuntimeException("Nickname is already taken!");
@@ -60,6 +71,13 @@ public class AuthService {
         return new AuthResponse(accessToken, refreshToken, person.getPersonID(), person.getNickname(), person.getPrivileges());
     }
 
+    /**
+     * Logs in a user by validating credentials and generating new JWT tokens.
+     * Supports both email and nickname for login.
+     *
+     * @param loginRequest contains login credentials
+     * @return AuthResponse object containing access and refresh tokens along with user details
+     */
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
         Person person;
@@ -75,14 +93,21 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateToken(person);
 
-        // Видаляємо старий токен, якщо є (щоб не накопичувати сміття)
+        // Remove existing refresh tokens for the user to avoid clutter
         refreshTokenRepository.deleteByPerson(person);
-        // Створюємо новий
+        // Create a new refresh token
         RefreshToken refreshToken = createRefreshToken(person);
 
         return new AuthResponse(accessToken, refreshToken.getRefreshToken(), person.getPersonID(), person.getNickname(), person.getPrivileges());
     }
 
+    /**
+     * Creates a new refresh token for the given user.
+     * Stores the token in the database with an expiry date.
+     *
+     * @param person the user for whom the token is generated
+     * @return the generated RefreshToken entity
+     */
     public RefreshToken createRefreshToken(Person person) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setPerson(person);
@@ -91,6 +116,12 @@ public class AuthService {
         return refreshTokenRepository.save(refreshToken);
     }
 
+    /**
+     * Retrieves the refresh token string associated with a given user ID.
+     *
+     * @param personId the ID of the user
+     * @return the refresh token string
+     */
     @Transactional
     public String getRefreshTokenString(Long personId) {
         return refreshTokenRepository.findAll().stream()
@@ -100,10 +131,17 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
     }
 
+    /**
+     * Refreshes the access token using a valid refresh token.
+     * Ensures the refresh token is not expired before generating a new access token.
+     *
+     * @param requestRefreshToken the refresh token provided by the client
+     * @return a new access token string
+     */
     public String refreshAccessToken(String requestRefreshToken) {
         return refreshTokenRepository.findByRefreshToken(requestRefreshToken)
                 .map(token -> {
-                    // Перевірка терміну дії
+                    // Check if the refresh token is expired
                     if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
                         refreshTokenRepository.delete(token);
                         throw new RuntimeException("Refresh token was expired. Please make a new signin request");
@@ -111,16 +149,27 @@ public class AuthService {
                     return token;
                 })
                 .map(token -> token.getPerson())
-                .map(person -> jwtUtil.generateToken(person)) // Генеруємо новий Access JWT
+                .map(person -> jwtUtil.generateToken(person)) // Generate a new Access JWT
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
 
+    /**
+     * Retrieves the current user's information based on their nickname.
+     *
+     * @param nickname the nickname of the current user
+     * @return AuthResponse object with the user's details
+     */
     public AuthResponse getCurrentPerson(String nickname) {
         Person user = personRepository.findByNickname(nickname)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with nickname: " + nickname));
         return new AuthResponse(null, null, user.getPersonID(), user.getNickname(), user.getPrivileges());
     }
 
+    /**
+     * Deletes the refresh token linked to a user by their ID.
+     *
+     * @param id the ID of the user
+     */
     @Transactional
     public void deleteRefreshTokenByPersonId(Long id) {
         Person person = personRepository.findById(id).orElseThrow();

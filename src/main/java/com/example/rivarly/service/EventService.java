@@ -18,12 +18,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-
+/**
+ * Service class for managing events.
+ * Offers methods to fetch event information, tags, and states.
+ */
 @Service
 @RequiredArgsConstructor
 public class EventService {
 
+    /**
+     * Default page size for paginated requests.
+     */
     public static final int DEFAULT_PAGE_SIZE = 10;
+
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
 
@@ -33,21 +40,34 @@ public class EventService {
     private final EventStateListRepository eventStateListRepository;
     private final EventStateListMapper eventStateListMapper;
 
-    public Page<EventSmallInfoResponse> getEventsSmallInfo(Integer pageNumber){
+    /**
+     * Retrieves a paginated list of small event information.
+     *
+     * @param pageNumber the page number to retrieve
+     * @return a Page of EventSmallInfoResponse containing small event information
+     */
+    public Page<EventSmallInfoResponse> getEventsSmallInfo(Integer pageNumber) {
         Pageable paging = PageRequest.of(pageNumber, DEFAULT_PAGE_SIZE);
 
         Page<Event> eventsPage = eventRepository.findAll(paging);
         return eventsPage.map(eventMapper::toDto);
     }
 
-    public List<EventTagsResponse> getAllTags(){
+    /**
+     * Retrieves all available event tags.
+     *
+     * @return a list of EventTagsResponse containing event tag information
+     */
+    public List<EventTagsResponse> getAllTags() {
         return eventTagsRepository.findAll().stream().map(eventTagMapper::toDto).toList();
     }
 
-    public List<EventStateListResponse> getAllStates(){
+    /**
+     * Retrieves all available event states.
+     *
+     * @return a list of EventStateListResponse containing event state information
+     */
+    public List<EventStateListResponse> getAllStates() {
         return eventStateListRepository.findAll().stream().map(eventStateListMapper::toDto).toList();
     }
-
-
-
 }
