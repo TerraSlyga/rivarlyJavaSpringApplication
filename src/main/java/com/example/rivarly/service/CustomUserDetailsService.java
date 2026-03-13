@@ -11,15 +11,31 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
 
+/**
+ * Custom implementation of UserDetailsService for managing user authentication.
+ * This service loads user-specific data from the database.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final PersonRepository personRepository;
 
+    /**
+     * Constructs a CustomUserDetailsService with the provided PersonRepository.
+     *
+     * @param personRepository the repository used to access Person entities
+     */
     public CustomUserDetailsService(PersonRepository personRepository) {
         this.personRepository = personRepository;
     }
 
+    /**
+     * Loads the user details by their username.
+     *
+     * @param username the username of the user to look up
+     * @return the UserDetails object containing user credentials and authorities
+     * @throws UsernameNotFoundException if the user is not found
+     */
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

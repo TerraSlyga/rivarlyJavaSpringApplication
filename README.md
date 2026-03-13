@@ -61,7 +61,7 @@ Run tests:
 - Initial data: `src/main/resources/data.sql`.
 - Secrets (credentials, MinIO config, etc.): `src/main/resources/secrets.properties` (see example below).
 
-If you use Docker Compose, the compose file at the repo root may provide configured services for local development.
+If you use Docker Compose, the composed file at the repo root may provide configured services for local development.
 
 ## `secrets.properties` (example)
 
@@ -105,7 +105,30 @@ This repository includes `LICENSE.md` at the project root. See that file for the
 ## Next steps
 
 - Create `src/main/resources/secrets.properties` with the values above.
-- Start local DB/MinIO (or use the compose file), then run the app.
+- Start local DB/MinIO (or use the composed file), then run the app.
+
+## Documentation guidelines
+
+To ensure consistency, contributors should document new features, entities, DTOs, or configurations as follows:
+
+1. **Class-level comments:**
+    - Provide a concise summary of the class's purpose.
+    - List key responsibilities and interactions with other modules.
+
+2. **Method-level comments:**
+    - Clearly explain the method's functionality, input parameters, and expected outcome.
+    - Indicate potential side effects or thrown exceptions.
+
+3. **Configuration updates:**
+    - Update this README or any related configuration file sections when introducing new environment variables, secrets,
+      or dependencies.
+
+4. **Folder structure:**
+    - Document directory additions in the `Project structure` section below.
+
+5. **Examples:**
+    - For endpoints or integrations, provide sample usage or payloads wherever applicable.
+
 
 ## Contact
 
