@@ -36,3 +36,4 @@ build/
 src/main/resources/secrets.properties
 src/main/resources/data.sql
 docker-compose.yml
+.logs
