@@ -15,45 +15,87 @@ A concise Spring Boot application for managing tournaments, events, registration
 - Maven (wrapper included) or use the included Maven wrapper scripts.
 - Docker & Docker Compose (optional, for services like Postgres/MinIO).
 
-## Quick start
+# 🛠 Developer Guide (Quick Start)
 
-On Windows (from project root):
+This guide will help you set up the project on a clean OS from scratch.
 
-```powershell
-mvnw.cmd spring-boot:run
+---
+
+## 1. Prerequisites
+
+Install the following tools before proceeding:
+
+- **Git** — for version control
+- **Docker & Docker Compose** — to run the database and object storage
+- **JDK 25** or newer
+- **IDE** — IntelliJ IDEA, VS Code, or Eclipse
+
+---
+
+## 2. Clone the Repository
+
+Open a terminal and run:
+
+```bash
+git clone https://github.com/TerraSlyga/rivarlyJavaSpringApplication.git
+cd rivarlyJavaSpringApplication
 ```
 
-On macOS / Linux:
+---
+
+## 3. Start Infrastructure
+
+The project uses Docker for **PostgreSQL** and **MinIO**. Spin up the containers with:
+
+```bash
+docker-compose up -d
+```
+
+This command automatically creates the database and configures the S3-compatible object storage.
+
+---
+
+## 4. Environment Configuration
+
+Review `src/main/resources/application.properties` (or `.env` if you use one) and make sure the credentials match the values defined in `docker-compose.yml`:
+
+| Parameter | Default Value |
+|-----------|---------------|
+| DB URL | `jdbc:postgresql://localhost:5432/rivarly_db` |
+| MinIO URL | `http://localhost:9000` |
+
+---
+
+## 5. Run the Application
+
+Use the Maven Wrapper to start the app:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Build a packaged JAR:
+Once started, the API will be available at: **`http://localhost:8080`**
 
-```bash
-./mvnw package
-# or on Windows: mvnw.cmd package
-```
+---
 
-Run the produced JAR:
+## 6. Common Commands
 
-```bash
-java -jar target/rivarlyJavaSpringApplication-0.0.1-SNAPSHOT.jar
-```
+| Command | Description |
+|---------|-------------|
+| `./mvnw clean package` | Clean build and package |
+| `./mvnw test` | Run tests |
+| `docker-compose down` | Stop all infrastructure containers |
+| `docker-compose logs -f` | Stream logs from DB / MinIO |
 
-Run with Docker Compose (if services provided in `docker-compose.yml`):
+---
 
-```bash
-docker-compose up --build
-```
+## 7. Default Dev Credentials
 
-Run tests:
-
-```bash
-./mvnw test
-# or on Windows: mvnw.cmd test
-```
+| Service | Address | Notes |
+|---------|---------|-------|
+| PostgreSQL | `localhost:5432` | See `docker-compose.yml` for user/password |
+| MinIO Console | `http://localhost:9001` | Web UI for object storage |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` | Available if Springdoc is configured |
 
 ## Configuration
 
