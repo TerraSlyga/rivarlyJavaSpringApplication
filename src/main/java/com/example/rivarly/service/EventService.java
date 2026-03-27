@@ -49,7 +49,7 @@ public class EventService {
     public Page<EventSmallInfoResponse> getEventsSmallInfo(Integer pageNumber) {
         Pageable paging = PageRequest.of(pageNumber, DEFAULT_PAGE_SIZE);
 
-        Page<Event> eventsPage = eventRepository.findAll(paging);
+        Page<Event> eventsPage = eventRepository.findAllOptimized(paging);
         return eventsPage.map(eventMapper::toDto);
     }
 
@@ -70,4 +70,8 @@ public class EventService {
     public List<EventStateListResponse> getAllStates() {
         return eventStateListRepository.findAll().stream().map(eventStateListMapper::toDto).toList();
     }
+    
+    
+    
+    
 }

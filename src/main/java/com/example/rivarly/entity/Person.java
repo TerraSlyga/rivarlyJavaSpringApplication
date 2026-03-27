@@ -16,7 +16,10 @@ import java.util.Set;
  * associated privileges, and an optional icon path.
  */
 @Entity
-@Table(name = "person")
+@Table(name = "person", indexes = {
+        @Index(name = "idx_person_nickname", columnList = "nickname"),
+        @Index(name = "idx_person_email", columnList = "email")
+})
 @Getter
 @Setter
 @NoArgsConstructor
