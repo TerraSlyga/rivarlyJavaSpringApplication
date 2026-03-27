@@ -59,4 +59,13 @@ public class Team {
      */
     @Column(name = "iconPath")
     private String iconPath;
+
+
+    /**
+     * Indicates whether the Team is temporary.
+     * A temporary team is not considered permanent and
+     * represent a short-term entity for events or activities.
+     */
+    @Column(name = "temporary")
+    private boolean temporary;
 }

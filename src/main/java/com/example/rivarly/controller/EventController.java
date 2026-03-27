@@ -3,6 +3,7 @@ package com.example.rivarly.controller;
 import com.example.rivarly.dto.event.EventSmallInfoResponse;
 import com.example.rivarly.dto.event.EventStateListResponse;
 import com.example.rivarly.dto.event.EventTagsResponse;
+import com.example.rivarly.entity.Event;
 import com.example.rivarly.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -118,4 +121,42 @@ public class EventController {
     public ResponseEntity<Page<EventSmallInfoResponse>> getAllEventsSmallInfo(@RequestParam(defaultValue = "0") Integer pageNumber) {
         return ResponseEntity.ok(eventService.getEventsSmallInfo(pageNumber));
     }
+
+
+//    /**
+//     * Creates a new event.
+//     *
+//     * @param event the details of the new event to create
+//     * @return a ResponseEntity containing the created event details
+//     */
+//    @Operation(
+//            summary = "Create a new event",
+//            description = "Handles the creation of a new event using the details provided in the request body.",
+//            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+//                    description = "The details of the event to create",
+//                    required = true,
+//                    content = @Content(
+//                            mediaType = "application/json",
+//                            schema = @Schema(implementation = Event.class),
+//                            examples = @ExampleObject(
+//                                    value = "{\"eventName\":\"Tech Conference\",\"eventDescription\":\"A conference about technology advancements\","
+//                                            + "\"iconPath\":\"/icons/tech.png\",\"organizer\":null,\"eventTags\":[],\"eventStates\":[],\"eventRegistration\":[]}"
+//                            )
+//                    )
+//            ),
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "201",
+//                            description = "Successfully created the new event",
+//                            content = @Content(
+//                                    mediaType = "application/json",
+//                                    schema = @Schema(implementation = Event.class)
+//                            )
+//                    )
+//            }
+//    )
+//    @PostMapping("/create")
+//    public ResponseEntity<Event> createEvent(@RequestBody Event event) {
+//        return ResponseEntity.status(201).body(eventService.createEvent(event));
+//    }
 }

@@ -1,7 +1,11 @@
 package com.example.rivarly.repository;
 
 import com.example.rivarly.entity.Event;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -27,4 +31,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     boolean existsByEventName(String eventName);
 
+    @EntityGraph(attributePaths = {"eventTags", "eventStates", "eventRegistration"})
+    @Query("SELECT e FROM Event e")
+    Page<Event> findAllOptimized(Pageable pageable);
 }

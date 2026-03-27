@@ -2,6 +2,7 @@ package com.example.rivarly.service;
 
 import com.example.rivarly.entity.Person;
 import com.example.rivarly.repository.PersonRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -38,6 +39,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     @Transactional
+    @Cacheable(value = "users", key = "#username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Person person = personRepository.findByNickname(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));

@@ -6,34 +6,34 @@ import com.example.rivarly.dto.auth.RegisterRequest;
 import com.example.rivarly.entity.Person;
 import com.example.rivarly.entity.Privilege;
 import com.example.rivarly.entity.RefreshToken;
+import com.example.rivarly.exception.CompetitionException;
 import com.example.rivarly.repository.PersonRepository;
 import com.example.rivarly.repository.PrivilegeRepository;
 import com.example.rivarly.repository.RefreshTokenRepository;
 import com.example.rivarly.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Service responsible for handling authentication-related operations.
- * Includes user registration, login, token management, and fetching user information.
- */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final PersonRepository personRepository;
     private final PrivilegeRepository privilegeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -41,74 +41,69 @@ public class AuthService {
     @Value("${jwt.refreshExpirationMs}")
     private Long refreshTokenDurationMs;
 
-    /**
-     * Registers a new user in the system.
-     * Ensures the nickname is unique, assigns default privileges, and generates tokens.
-     *
-     * @param registerRequest contains registration details like name, email, and password
-     * @return AuthResponse object containing access and refresh tokens along with user details
-     */
     public AuthResponse register(RegisterRequest registerRequest) {
+        log.info("Starting registration for nickname: {}", registerRequest.getNickname());
+
         if (personRepository.existsByNickname(registerRequest.getNickname())) {
-            throw new RuntimeException("Nickname is already taken!");
+            log.warn("Registration failed: nickname {} already taken", registerRequest.getNickname());
+            throw new CompetitionException("auth.nickname.taken", "AUTH-001", registerRequest.getNickname());
         }
 
-        Person person = new Person();
-        person.setPersonName(registerRequest.getPersonName());
-        person.setPersonSurname(registerRequest.getPersonSurname());
-        person.setNickname(registerRequest.getNickname());
-        person.setEmail(registerRequest.getEmail());
-        person.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+        try {
+            Person person = new Person();
+            person.setPersonName(registerRequest.getPersonName());
+            person.setPersonSurname(registerRequest.getPersonSurname());
+            person.setNickname(registerRequest.getNickname());
+            person.setEmail(registerRequest.getEmail());
+            person.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
 
-        Privilege privilege = privilegeRepository.findByPrivilegeName("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("Privilege not found!"));
-        person.getPrivileges().add(privilege);
-        personRepository.save(person);
+            Privilege privilege = privilegeRepository.findByPrivilegeName("ROLE_USER")
+                    .orElseThrow(() -> new CompetitionException("auth.privilege.notfound", "AUTH-002"));
 
-        String accessToken = jwtUtil.generateToken(person);
-        String refreshToken = createRefreshToken(person).getRefreshToken();
+            person.getPrivileges().add(privilege);
+            personRepository.save(person);
 
-        return new AuthResponse(accessToken, refreshToken, person.getPersonID(), person.getNickname(), person.getPrivileges());
+            String accessToken = jwtUtil.generateToken(person);
+            String refreshToken = createRefreshToken(person).getRefreshToken();
+
+            log.info("User {} registered successfully", person.getNickname());
+            return new AuthResponse(accessToken, refreshToken, person.getPersonID(), person.getNickname(), person.getPrivileges());
+        } catch (Exception e) {
+            log.error("Critical error during user registration", e);
+            throw new CompetitionException("error.internal", "SYS-500");
+        }
     }
 
-    /**
-     * Logs in a user by validating credentials and generating new JWT tokens.
-     * Supports both email and nickname for login.
-     *
-     * @param loginRequest contains login credentials
-     * @return AuthResponse object containing access and refresh tokens along with user details
-     */
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
+        log.debug("Login attempt for identifier: {}", loginRequest.getNickname());
         Person person;
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getNickname(), loginRequest.getPassword()));
-            person = personRepository.findByNickname(loginRequest.getNickname())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-        } catch (Exception e) {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-            person = personRepository.findByEmail(loginRequest.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            try {
+                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getNickname(), loginRequest.getPassword()));
+                person = personRepository.findByNickname(loginRequest.getNickname())
+                        .orElseThrow(() -> new CompetitionException("auth.user.notfound", "AUTH-003"));
+            } catch (AuthenticationException e) {
+                log.debug("Nickname login failed, trying email for: {}", loginRequest.getEmail());
+                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+                person = personRepository.findByEmail(loginRequest.getEmail())
+                        .orElseThrow(() -> new CompetitionException("auth.user.notfound", "AUTH-003"));
+            }
+        } catch (AuthenticationException e) {
+            log.warn("Authentication failed for user: {}", loginRequest.getNickname());
+            throw new CompetitionException("auth.credentials.invalid", "AUTH-004");
         }
 
         String accessToken = jwtUtil.generateToken(person);
-
-        // Remove existing refresh tokens for the user to avoid clutter
         refreshTokenRepository.deleteByPerson(person);
-        // Create a new refresh token
         RefreshToken refreshToken = createRefreshToken(person);
 
+        log.info("User {} logged in successfully", person.getNickname());
         return new AuthResponse(accessToken, refreshToken.getRefreshToken(), person.getPersonID(), person.getNickname(), person.getPrivileges());
     }
 
-    /**
-     * Creates a new refresh token for the given user.
-     * Stores the token in the database with an expiry date.
-     *
-     * @param person the user for whom the token is generated
-     * @return the generated RefreshToken entity
-     */
     public RefreshToken createRefreshToken(Person person) {
+        log.debug("Creating refresh token for user ID: {}", person.getPersonID());
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setPerson(person);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
@@ -116,63 +111,45 @@ public class AuthService {
         return refreshTokenRepository.save(refreshToken);
     }
 
-    /**
-     * Retrieves the refresh token string associated with a given user ID.
-     *
-     * @param personId the ID of the user
-     * @return the refresh token string
-     */
-    @Transactional
-    public String getRefreshTokenString(Long personId) {
-        return refreshTokenRepository.findAll().stream()
-                .filter(rt -> rt.getPerson().getPersonID().equals(personId))
-                .findFirst()
-                .map(RefreshToken::getRefreshToken)
-                .orElseThrow(() -> new RuntimeException("Refresh token not found"));
-    }
-
-    /**
-     * Refreshes the access token using a valid refresh token.
-     * Ensures the refresh token is not expired before generating a new access token.
-     *
-     * @param requestRefreshToken the refresh token provided by the client
-     * @return a new access token string
-     */
     public String refreshAccessToken(String requestRefreshToken) {
         return refreshTokenRepository.findByRefreshToken(requestRefreshToken)
                 .map(token -> {
-                    // Check if the refresh token is expired
                     if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+                        log.warn("Refresh token expired for token: {}", requestRefreshToken);
                         refreshTokenRepository.delete(token);
-                        throw new RuntimeException("Refresh token was expired. Please make a new signin request");
+                        throw new CompetitionException("auth.token.expired", "AUTH-005");
                     }
                     return token;
                 })
-                .map(token -> token.getPerson())
-                .map(person -> jwtUtil.generateToken(person)) // Generate a new Access JWT
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .map(token -> {
+                    log.info("Refreshing access token for user: {}", token.getPerson().getNickname());
+                    return jwtUtil.generateToken(token.getPerson());
+                })
+                .orElseThrow(() -> new CompetitionException("auth.token.notfound", "AUTH-006"));
+    }
+
+    @Transactional
+    public void deleteRefreshTokenByPersonId(Long id) {
+        log.info("Deleting refresh tokens for person ID: {}", id);
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new CompetitionException("auth.user.notfound", "AUTH-003"));
+        refreshTokenRepository.deleteByPerson(person);
     }
 
     /**
      * Retrieves the current user's information based on their nickname.
-     *
-     * @param nickname the nickname of the current user
-     * @return AuthResponse object with the user's details
+     * Includes logging for monitoring user requests.
      */
     public AuthResponse getCurrentPerson(String nickname) {
-        Person user = personRepository.findByNickname(nickname)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with nickname: " + nickname));
-        return new AuthResponse(null, null, user.getPersonID(), user.getNickname(), user.getPrivileges());
-    }
+        log.debug("Fetching profile data for user: {}", nickname);
 
-    /**
-     * Deletes the refresh token linked to a user by their ID.
-     *
-     * @param id the ID of the user
-     */
-    @Transactional
-    public void deleteRefreshTokenByPersonId(Long id) {
-        Person person = personRepository.findById(id).orElseThrow();
-        refreshTokenRepository.deleteByPerson(person);
+        Person user = personRepository.findByNickname(nickname)
+                .orElseThrow(() -> {
+                    log.warn("Profile fetch failed: user {} not found", nickname);
+                    return new CompetitionException("auth.user.notfound", "AUTH-003", nickname);
+                });
+
+        log.info("Profile data successfully retrieved for user: {}", nickname);
+        return new AuthResponse(null, null, user.getPersonID(), user.getNickname(), user.getPrivileges());
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * JwtAuthenticationFilter is a custom Spring security filter responsible for handling JSON Web Token (JWT) based
@@ -47,25 +48,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        String jwt = null;
 
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())){
-                    jwt = cookie.getValue();
-                    break;
-                }
-
-            }
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            chain.doFilter(request, response);
+            return;
         }
-        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        String jwt = null;
+        if (request.getCookies() != null) {
+            jwt = Arrays.stream(request.getCookies())
+                    .filter(cookie -> "accessToken".equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (jwt != null) {
             try {
-                String username = jwtUtil.extractUsername(jwt); // Метод має бути в JwtUtils
+                String username = jwtUtil.extractUsername(jwt);
 
                 if (username != null) {
+
+                    if (jwtUtil.isTokenExpired(jwt)) {
+                        chain.doFilter(request, response);
+                        return;
+                    }
+
                     UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                    if (jwtUtil.isTokenValid(jwt, userDetails)) { // Метод перевірки валідності
+                    if (jwtUtil.isTokenValid(jwt, userDetails)) {
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
@@ -75,10 +85,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
                 }
-            } catch (UsernameNotFoundException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+
+                logger.error("Cannot set user authentication: {}", e);
             }
         }
         chain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/assets/") || path.equals("/favicon.ico");
     }
 }
